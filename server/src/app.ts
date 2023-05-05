@@ -5,6 +5,7 @@ import config from 'config';
 import { morganMiddleware, globalErrorMiddleware } from './middleware';
 import { APIError } from './utils';
 import { envs } from './constants';
+import { routerV1 } from './router/api';
 
 export const app = express();
 
@@ -19,7 +20,7 @@ if (NODE_ENV === envs.DEVELOPMENT) {
 }
 
 // ===== Apply routes 👇🏼 =====
-// app.use('/api/v1', routerV1);
+app.use('/api/v1', routerV1);
 
 // Not found route handler
 app.all('*', (req: Request, _: Response, next: NextFunction) => {
