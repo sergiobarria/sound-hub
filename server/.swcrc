@@ -1,0 +1,22 @@
+{
+    "env": {
+        "targest": {
+            "node": 18
+        }
+    },
+    "jsc": {
+        "parser": {
+            "syntax": "typescript"
+        },
+        "baseUrl": ".",
+        "paths": {
+            "@/*": ["./src/*"],
+            "@/config/*": ["./config/*"]
+        }
+    },
+    "module": {
+        "type": "commonjs"
+    },
+    "sourceMaps": true,
+    "minify": true
+}
