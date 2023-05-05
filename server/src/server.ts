@@ -2,9 +2,11 @@ import * as http from 'http';
 
 import chalk from 'chalk';
 import config from 'config';
+import 'express-async-errors';
 
 import { app } from './app';
 import { logger } from './utils';
+import { prisma } from './lib';
 
 let server: http.Server;
 const PORT = config.get<string>('PORT');
@@ -25,6 +27,11 @@ process.on('unhandledRejection', err => {
 async function main(): Promise<void> {
     server = http.createServer(app);
 
+    // connect to the database
+    await prisma.$connect().finally(() => {
+        logger.info(chalk.greenBright.bold.underline('⇨ 💾 Connected to mongodb database'));
+    });
+
     try {
         server.listen(PORT, () => {
             logger.info(
@@ -42,10 +49,10 @@ async function main(): Promise<void> {
 function shutdown(): void {
     logger.info(chalk.magentaBright.bold.underline('⇨ 🔴 Shutting down server...'));
     void server.close();
-    // TODO: uncomment this line when adding db connection
-    // prisma.$disconnect().finally(() => {
-    //     process.exit(0)
-    // })
+
+    prisma.$disconnect().finally(() => {
+        process.exit(0);
+    });
 }
 
 process.on('SIGTERM', shutdown);

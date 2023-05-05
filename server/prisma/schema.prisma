@@ -9,3 +9,33 @@ datasource db {
   provider = "mongodb"
   url      = env("DATABASE_URL")
 }
+
+model User {
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  name       String
+  email      String   @unique
+  password   String
+  isVerified Boolean  @default(false)
+  avatar     Avatar?
+  tokens     String[]
+  favorites  Audio[]
+  followers  String[]
+  following  String[]
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@map(name: "users")
+}
+
+model Audio {
+  id     String  @id @default(auto()) @map("_id") @db.ObjectId
+  User   User?   @relation(fields: [userId], references: [id])
+  userId String? @db.ObjectId
+
+  @@map(name: "audios")
+}
+
+type Avatar {
+  url      String @default("https://i.ibb.co/4pDNDk1/avatar.png")
+  publicId String
+}
