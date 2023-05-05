@@ -19,6 +19,7 @@
         "typecheck-server": "npm run typecheck --prefix server",
         "typecheck": "npm run typecheck-server",
         "lint-staged": "lint-staged",
+        "generate": "npm run generate --prefix server",
         "prepare": "husky install"
     },
     "keywords": [],

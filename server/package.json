@@ -11,7 +11,8 @@
         "lint-fix": "eslint --fix --ext .ts src",
         "format": "prettier --write \"src/**/*.ts\"",
         "typecheck": "tsc --noEmit",
-        "check-all": "npm run lint && npm run typecheck"
+        "check-all": "npm run lint && npm run typecheck",
+        "generate": "npx prisma generate"
     },
     "keywords": [],
     "author": "",
