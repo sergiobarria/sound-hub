@@ -49,5 +49,17 @@ export const verifyEmailSchema = z.object({
     }),
 });
 
+export const resendVerificationTokenSchema = z.object({
+    body: z.object({
+        userId: z
+            .string({
+                required_error: 'User ID is required',
+            })
+            .refine(value => {
+                return ObjectId.isValid(value);
+            }, 'Not a valid MongoDB ObjectId'),
+    }),
+});
+
 export type RegisterInput = z.infer<typeof registerSchema>['body'];
 export type VerifyEmailInput = z.infer<typeof verifyEmailSchema>['body'];

@@ -27,6 +27,12 @@ export async function findToken(
     return token;
 }
 
+export async function findUserById(id: string): Promise<User | null> {
+    const user = await prisma.user.findUnique({ where: { id } });
+
+    return user;
+}
+
 export async function findUserAndUpdate(
     id: string,
     data: Prisma.UserUpdateInput
@@ -39,8 +45,12 @@ export async function findUserAndUpdate(
     return user;
 }
 
-export async function findTokenAndDelete(id: string): Promise<void> {
-    await prisma.emailVerificationToken.delete({ where: { id } });
+export async function findTokenAndDelete(ownerId: string): Promise<void> {
+    const token = await prisma.emailVerificationToken.findFirst({ where: { ownerId } });
+
+    if (token === null) return;
+
+    await prisma.emailVerificationToken.delete({ where: { ownerId } });
 }
 
 export async function generateToken(ownerId: string): Promise<string> {

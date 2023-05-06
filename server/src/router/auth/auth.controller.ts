@@ -1,4 +1,4 @@
-import type { Request, Response, NextFunction, RequestHandler } from 'express';
+import type { Request, Response, RequestHandler } from 'express';
 import httpStatus from 'http-status';
 
 import type { RegisterInput, VerifyEmailInput } from './auth.schema';
@@ -8,8 +8,7 @@ import * as services from './auth.services';
 
 export const register: RequestHandler = async (
     req: Request<any, any, RegisterInput>,
-    res: Response,
-    next: NextFunction
+    res: Response
 ) => {
     const { name, email, password } = req.body;
 
@@ -55,5 +54,35 @@ export const verififyEmail: RequestHandler = async (
     return res.status(httpStatus.OK).json({
         success: true,
         message: 'Email verified successfully',
+    });
+};
+
+export const sendVerificationToken: RequestHandler = async (
+    req: Request<any, any, Omit<VerifyEmailInput, 'token'>>,
+    res: Response
+) => {
+    const { userId } = req.body;
+
+    const user = await services.findUserById(userId);
+
+    if (user === null) {
+        return res.status(httpStatus.NOT_FOUND).json({
+            success: false,
+            message: 'User not found',
+        });
+    }
+
+    // delete existing token if any
+    await services.findTokenAndDelete(userId);
+
+    // regenerate token
+    const newToken = await services.generateToken(userId);
+
+    // send verification email
+    sendVerificationEmail(newToken, { name: user?.name, email: user?.email });
+
+    return res.status(httpStatus.OK).json({
+        success: true,
+        message: 'Verification email sent successfully, please check your email',
     });
 };
