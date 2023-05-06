@@ -30,7 +30,7 @@ export async function emailVerificationTokenMiddleware(
     params: Prisma.MiddlewareParams,
     next: PrismaNextFunc
 ): Promise<void> {
-    const collection = 'EmailVerificationToken';
+    const collection = 'Token';
     const { model, action, args } = params;
 
     // actions before creating a new email verification token 👇🏼

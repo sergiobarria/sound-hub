@@ -11,31 +11,43 @@ datasource db {
 }
 
 model User {
-  id         String                  @id @default(auto()) @map("_id") @db.ObjectId
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
   name       String
-  email      String                  @unique
+  email      String   @unique
   password   String
-  isVerified Boolean                 @default(false)
+  isVerified Boolean  @default(false)
   avatar     Avatar?
   favorites  Audio[]
   followers  String[]
   following  String[]
-  createdAt  DateTime                @default(now())
-  updatedAt  DateTime                @updatedAt
-  emailToken EmailVerificationToken?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  token      Token?
+  // emailToken EmailVerificationToken?
 
   @@map(name: "users")
 }
 
-model EmailVerificationToken {
-  id        String   @id @default(auto()) @map("_id") @db.ObjectId
-  owner     User     @relation(fields: [ownerId], references: [id])
-  ownerId   String   @unique @db.ObjectId
+model Token {
+  id        String    @id @default(auto()) @map("_id") @db.ObjectId
+  owner     User      @relation(fields: [ownerId], references: [id])
+  ownerId   String    @unique @db.ObjectId
   token     String
-  createdAt DateTime @default(now())
+  type      TokenType
+  createdAt DateTime  @default(now())
 
-  @@map(name: "email_verification_tokens")
+  @@map(name: "tokens")
 }
+
+// model EmailVerificationToken {
+//   id        String   @id @default(auto()) @map("_id") @db.ObjectId
+//   owner     User     @relation(fields: [ownerId], references: [id])
+//   ownerId   String   @unique @db.ObjectId
+//   token     String
+//   createdAt DateTime @default(now())
+
+//   @@map(name: "email_verification_tokens")
+// }
 
 model Audio {
   id     String  @id @default(auto()) @map("_id") @db.ObjectId
@@ -48,4 +60,9 @@ model Audio {
 type Avatar {
   url      String @default("https://i.ibb.co/4pDNDk1/avatar.png")
   publicId String
+}
+
+enum TokenType {
+  VERIFY_EMAIL
+  RESET_PASSWORD
 }

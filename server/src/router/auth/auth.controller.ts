@@ -1,8 +1,9 @@
 import type { Request, Response, RequestHandler } from 'express';
 import httpStatus from 'http-status';
+import { TokenType } from '@prisma/client';
 
-import type { RegisterInput, VerifyEmailInput } from './auth.schema';
-import { sendVerificationEmail } from '@/lib';
+import type { ForgotPasswordInput, RegisterInput, VerifyEmailInput } from './auth.schema';
+import { sendForgotPasswordLink, sendVerificationEmail } from '@/lib';
 import { bcryptCompare } from '@/utils';
 import * as services from './auth.services';
 
@@ -13,7 +14,10 @@ export const register: RequestHandler = async (
     const { name, email, password } = req.body;
 
     const user = await services.insertUser({ name, email, password });
-    const token = await services.generateToken(user.id as string);
+    const token = await services.generateVerifyEmailToken(
+        user.id as string,
+        TokenType.VERIFY_EMAIL
+    );
 
     sendVerificationEmail(token, { name, email });
 
@@ -39,7 +43,11 @@ export const verififyEmail: RequestHandler = async (
         });
     }
 
+    console.log({ verificationToken: verificationToken.token, token, userId });
+
     const isMatch = await bcryptCompare(token, verificationToken.token);
+
+    console.log({ isMatch });
 
     if (!isMatch) {
         return res.status(httpStatus.BAD_REQUEST).json({
@@ -76,7 +84,7 @@ export const sendVerificationToken: RequestHandler = async (
     await services.findTokenAndDelete(userId);
 
     // regenerate token
-    const newToken = await services.generateToken(userId);
+    const newToken = await services.generateVerifyEmailToken(userId, TokenType.VERIFY_EMAIL);
 
     // send verification email
     sendVerificationEmail(newToken, { name: user?.name, email: user?.email });
@@ -84,5 +92,39 @@ export const sendVerificationToken: RequestHandler = async (
     return res.status(httpStatus.OK).json({
         success: true,
         message: 'Verification email sent successfully, please check your email',
+    });
+};
+
+export const forgotPassword: RequestHandler = async (
+    req: Request<any, any, ForgotPasswordInput>,
+    res: Response
+) => {
+    const { email } = req.body;
+
+    const user = await services.findUser({ email });
+
+    if (user === null) {
+        return res.status(httpStatus.NOT_FOUND).json({
+            success: false,
+            message: 'User not found',
+        });
+    }
+
+    // delete existing token if any
+    await services.findTokenAndDelete(user.id);
+
+    // generate link
+    const token = await services.generateResetPasswordToken(user.id, TokenType.RESET_PASSWORD);
+    console.log({ token });
+    const resetLink = `${req.protocol}://${req.get('host')}?token=${token}&userId=${user.id}`;
+
+    sendForgotPasswordLink({
+        email: user.email,
+        link: resetLink,
+    });
+
+    return res.status(httpStatus.OK).json({
+        success: true,
+        message: 'Reset password link sent successfully, please check your registered  email',
     });
 };
