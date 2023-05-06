@@ -2,9 +2,14 @@ import express, { type Request, type Response, type NextFunction } from 'express
 import cors from 'cors';
 import config from 'config';
 
-import { morganMiddleware, globalErrorMiddleware } from './middleware';
+import {
+    morganMiddleware,
+    globalErrorMiddleware,
+    emailVerificationTokenMiddleware,
+} from './middleware';
 import { APIError } from './utils';
 import { envs } from './constants';
+import { prisma } from './lib';
 import { routerV1 } from './router/api';
 
 export const app = express();
@@ -31,3 +36,4 @@ app.all('*', (req: Request, _: Response, next: NextFunction) => {
 app.use(globalErrorMiddleware);
 
 // ===== Apply prisma middlewares 👇🏼 =====
+prisma.$use(emailVerificationTokenMiddleware);
