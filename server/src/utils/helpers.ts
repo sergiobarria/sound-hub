@@ -1,3 +1,5 @@
+import bcrypt from 'bcryptjs';
+
 /**
  * @desc: return a random group of numbers for OTP generation
  */
@@ -10,4 +12,11 @@ export function generateOTPToken(length = 6): string {
     }
 
     return otp;
+}
+
+/**
+ * @desc: compare a candidate string with a hashed string
+ */
+export async function bcryptCompare(candidate: string, token: string): Promise<boolean> {
+    return await bcrypt.compare(candidate, token);
 }
