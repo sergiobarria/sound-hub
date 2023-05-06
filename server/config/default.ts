@@ -11,4 +11,6 @@ export default {
     MAILTRAP_USER: process.env.MAILTRAP_USER,
     MAILTRAP_PASSWORD: process.env.MAILTRAP_PASSWORD,
     EMAIL_SENDER: process.env.EMAIL_SENDER,
+    PASSWORD_RESET_BASE_URL: process.env.PASSWORD_RESET_BASE_URL,
+    SIGN_IN_URL: process.env.SIGN_IN_URL,
 };

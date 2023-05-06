@@ -1,12 +1,21 @@
 import express from 'express';
 
-import { forgotPassword, register, sendVerificationToken, verififyEmail } from './auth.controller';
-import { validate } from '@/middleware';
+import {
+    forgotPassword,
+    register,
+    sendVerificationToken,
+    tokenIsValid,
+    updatePassword,
+    verififyEmail,
+} from './auth.controller';
+import { validate, verifyToken } from '@/middleware';
 import {
     forgotPasswordSchema,
     registerSchema,
     resendVerificationTokenSchema,
+    updatePasswordSchema,
     verifyEmailSchema,
+    verifyTokenSchema,
 } from './auth.schema';
 
 const router = express.Router();
@@ -19,5 +28,12 @@ router.post(
     sendVerificationToken
 );
 router.post('/forgot-password', validate(forgotPasswordSchema), forgotPassword);
+router.post(
+    '/verify-forgot-password-token',
+    validate(verifyTokenSchema),
+    verifyToken,
+    tokenIsValid
+);
+router.patch('/update-password', validate(updatePasswordSchema), verifyToken, updatePassword);
 
 export { router as authRouter };

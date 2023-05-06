@@ -1,6 +1,6 @@
 import crypto from 'crypto';
 
-import type { TokenType, Token, Prisma, User } from '@prisma/client';
+import { TokenType, type Token, type Prisma, type User } from '@prisma/client';
 import { omit } from 'lodash';
 
 import { prisma } from '@/lib';
@@ -51,8 +51,11 @@ export async function findUserAndUpdate(
     return user;
 }
 
-export async function findTokenAndDelete(ownerId: string): Promise<void> {
-    const token = await prisma.token.findFirst({ where: { ownerId } });
+export async function findTokenAndDelete(
+    ownerId: string,
+    type: TokenType = TokenType.VERIFY_EMAIL
+): Promise<void> {
+    const token = await prisma.token.findFirst({ where: { ownerId, type } });
 
     if (token === null) return;
 

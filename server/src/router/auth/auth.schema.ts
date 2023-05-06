@@ -32,13 +32,12 @@ const payload = {
         }),
 };
 
-export const registerSchema = z.object({ ...payload });
-
-export const verifyEmailSchema = z.object({
+export const validateTokenSchema = {
     body: z.object({
         token: z.string({
             required_error: 'Token is required',
         }),
+        type: z.enum(['VERIFY_EMAIL', 'RESET_PASSWORD']),
         userId: z
             .string({
                 required_error: 'User ID is required',
@@ -47,7 +46,11 @@ export const verifyEmailSchema = z.object({
                 return ObjectId.isValid(value);
             }, 'Not a valid MongoDB ObjectId'),
     }),
-});
+};
+
+export const registerSchema = z.object({ ...payload });
+export const verifyEmailSchema = z.object({ ...validateTokenSchema });
+export const verifyTokenSchema = z.object({ ...validateTokenSchema });
 
 export const resendVerificationTokenSchema = z.object({
     body: z.object({
@@ -73,6 +76,34 @@ export const forgotPasswordSchema = z.object({
     }),
 });
 
+export const updatePasswordSchema = z.object({
+    body: z
+        .object({
+            token: z.string({
+                required_error: 'Token is required',
+            }),
+            type: z.enum(['VERIFY_EMAIL', 'RESET_PASSWORD']),
+            userId: z.string({
+                required_error: 'User ID is required',
+            }),
+            password: z
+                .string({
+                    required_error: 'Password is required',
+                })
+                .min(8)
+                .max(255),
+            passwordConfirm: z.string({
+                required_error: 'Password confirm is required',
+            }),
+        })
+        .refine(data => data.password === data.passwordConfirm, {
+            message: 'Passwords do not match',
+            path: ['passwordConfirm'],
+        }),
+});
+
 export type RegisterInput = z.infer<typeof registerSchema>['body'];
 export type VerifyEmailInput = z.infer<typeof verifyEmailSchema>['body'];
 export type ForgotPasswordInput = z.infer<typeof forgotPasswordSchema>['body'];
+export type UpdatePasswordInput = z.infer<typeof updatePasswordSchema>['body'];
+export type VerifyTokenInput = z.infer<typeof verifyTokenSchema>['body'];
