@@ -6,6 +6,7 @@ import {
     morganMiddleware,
     globalErrorMiddleware,
     emailVerificationTokenMiddleware,
+    userMiddleware,
 } from './middleware';
 import { APIError } from './utils';
 import { envs } from './constants';
@@ -37,3 +38,4 @@ app.use(globalErrorMiddleware);
 
 // ===== Apply prisma middlewares 👇🏼 =====
 prisma.$use(emailVerificationTokenMiddleware);
+prisma.$use(userMiddleware);
