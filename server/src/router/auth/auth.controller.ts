@@ -1,10 +1,24 @@
 import type { Request, Response, RequestHandler } from 'express';
+import { TokenType } from '@prisma/client';
 import httpStatus from 'http-status';
+import config from 'config';
+import bcrypt from 'bcryptjs';
 
-import type { RegisterInput, VerifyEmailInput } from './auth.schema';
-import { sendVerificationEmail } from '@/lib';
+import type {
+    ForgotPasswordInput,
+    RegisterInput,
+    UpdatePasswordInput,
+    VerifyEmailInput,
+} from './auth.schema';
+import {
+    sendForgotPasswordLink,
+    sendPasswordUpdatedSuccessfully,
+    sendVerificationEmail,
+} from '@/lib';
 import { bcryptCompare } from '@/utils';
 import * as services from './auth.services';
+
+const SALT_ROUNDS = config.get<string>('SALT_ROUNDS');
 
 export const register: RequestHandler = async (
     req: Request<any, any, RegisterInput>,
@@ -13,7 +27,10 @@ export const register: RequestHandler = async (
     const { name, email, password } = req.body;
 
     const user = await services.insertUser({ name, email, password });
-    const token = await services.generateToken(user.id as string);
+    const token = await services.generateVerifyEmailToken(
+        user.id as string,
+        TokenType.VERIFY_EMAIL
+    );
 
     sendVerificationEmail(token, { name, email });
 
@@ -39,7 +56,11 @@ export const verififyEmail: RequestHandler = async (
         });
     }
 
+    console.log({ verificationToken: verificationToken.token, token, userId });
+
     const isMatch = await bcryptCompare(token, verificationToken.token);
+
+    console.log({ isMatch });
 
     if (!isMatch) {
         return res.status(httpStatus.BAD_REQUEST).json({
@@ -76,7 +97,7 @@ export const sendVerificationToken: RequestHandler = async (
     await services.findTokenAndDelete(userId);
 
     // regenerate token
-    const newToken = await services.generateToken(userId);
+    const newToken = await services.generateVerifyEmailToken(userId, TokenType.VERIFY_EMAIL);
 
     // send verification email
     sendVerificationEmail(newToken, { name: user?.name, email: user?.email });
@@ -84,5 +105,85 @@ export const sendVerificationToken: RequestHandler = async (
     return res.status(httpStatus.OK).json({
         success: true,
         message: 'Verification email sent successfully, please check your email',
+    });
+};
+
+export const forgotPassword: RequestHandler = async (
+    req: Request<any, any, ForgotPasswordInput>,
+    res: Response
+) => {
+    const { email } = req.body;
+    const PASSWORD_RESET_BASE_URL = config.get<string>('PASSWORD_RESET_BASE_URL');
+
+    const user = await services.findUser({ email });
+
+    if (user === null) {
+        return res.status(httpStatus.NOT_FOUND).json({
+            success: false,
+            message: 'User not found',
+        });
+    }
+
+    // delete existing token if any
+    await services.findTokenAndDelete(user.id, TokenType.RESET_PASSWORD);
+
+    // generate link
+    const token = await services.generateResetPasswordToken(user.id, TokenType.RESET_PASSWORD);
+
+    const resetLink = `${PASSWORD_RESET_BASE_URL}?token=${token}&userId=${user.id}`;
+
+    sendForgotPasswordLink({
+        email: user.email,
+        link: resetLink,
+    });
+
+    return res.status(httpStatus.OK).json({
+        success: true,
+        message: 'Reset password link sent successfully, please check your registered  email',
+    });
+};
+
+export const tokenIsValid: RequestHandler = async (req: Request, res: Response) => {
+    return res.status(httpStatus.OK).json({
+        success: true,
+        message: 'Token is valid',
+        valid: true,
+    });
+};
+
+export const updatePassword: RequestHandler = async (
+    req: Request<any, any, UpdatePasswordInput>,
+    res: Response
+) => {
+    const { password, userId } = req.body;
+
+    const user = await services.findUserById(userId);
+
+    if (user === null) {
+        return res.status(httpStatus.NOT_FOUND).json({
+            success: false,
+            message: 'User not found',
+        });
+    }
+
+    const isMatch = await bcryptCompare(password, user.password);
+
+    if (isMatch) {
+        return res.status(httpStatus.BAD_REQUEST).json({
+            success: false,
+            message: 'New password cannot be same as old password',
+        });
+    }
+
+    const hashedPassword = await bcrypt.hash(password, Number(SALT_ROUNDS));
+
+    await services.findUserAndUpdate(userId, { password: hashedPassword });
+    await services.findTokenAndDelete(userId, TokenType.RESET_PASSWORD); // delete token if exists
+
+    sendPasswordUpdatedSuccessfully(user.name, user.email);
+
+    return res.status(httpStatus.OK).json({
+        success: true,
+        message: 'Password updated successfully, check your email',
     });
 };
