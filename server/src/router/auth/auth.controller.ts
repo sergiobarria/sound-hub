@@ -56,11 +56,7 @@ export const verififyEmail: RequestHandler = async (
         });
     }
 
-    console.log({ verificationToken: verificationToken.token, token, userId });
-
     const isMatch = await bcryptCompare(token, verificationToken.token);
-
-    console.log({ isMatch });
 
     if (!isMatch) {
         return res.status(httpStatus.BAD_REQUEST).json({

@@ -1,3 +1,5 @@
+import * as path from 'path';
+
 import express, { type Request, type Response, type NextFunction } from 'express';
 import cors from 'cors';
 import config from 'config';
@@ -19,6 +21,8 @@ const NODE_ENV = config.get<string>('NODE_ENV');
 
 // ===== Apply middlewares 👇🏼 =====
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+app.use(express.static(path.join(__dirname, '../public')));
 app.use(cors());
 
 if (NODE_ENV === envs.DEVELOPMENT) {

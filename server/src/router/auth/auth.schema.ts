@@ -37,7 +37,9 @@ export const validateTokenSchema = {
         token: z.string({
             required_error: 'Token is required',
         }),
-        type: z.enum(['VERIFY_EMAIL', 'RESET_PASSWORD']),
+        type: z.enum(['VERIFY_EMAIL', 'RESET_PASSWORD'], {
+            required_error: 'Type is required',
+        }),
         userId: z
             .string({
                 required_error: 'User ID is required',
