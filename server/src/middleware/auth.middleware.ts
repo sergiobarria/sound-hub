@@ -23,8 +23,6 @@ export const verifyToken: RequestHandler = async (
 
     const isMatch = await bcryptCompare(token, resetPasswordToken.token);
 
-    console.log({ isMatch, token, resetPasswordToken });
-
     if (!isMatch) {
         return res.status(httpStatus.BAD_REQUEST).json({
             success: false,
